@@ -64,7 +64,7 @@ elif st.session_state["state"] == "ask_questions":
             try:
                 st.session_state["inputs"][question] = float(user_input)
                 st.session_state["current_question_index"] += 1
-                st.experimental_rerun()
+                st.rerun()
             except ValueError:
                 st.error("Please enter a valid number.")
     else:
