@@ -1,0 +1,7 @@
+{
+  "entrypoint": "chainlit run app.py --port 8080 --host 0.0.0.0",
+  "env": {
+    "HF_API_KEY": "your_huggingface_api_key"
+  },
+  "python_version": "3.9"
+}
