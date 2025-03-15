@@ -18,9 +18,9 @@ st.title("🩺 Health Prediction Chatbot")
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
 
-# Display chat history
-for msg in st.session_state["messages"]:
-    message(msg["content"], is_user=msg["is_user"])
+# Display chat history with unique keys
+for i, msg in enumerate(st.session_state["messages"]):
+    message(msg["content"], is_user=msg["is_user"], key=f"msg_{i}")
 
 # User input
 user_input = st.text_input("Describe your symptoms:", key="user_input")
@@ -60,4 +60,4 @@ if user_input:
 
     # Add chatbot response
     st.session_state["messages"].append({"content": response, "is_user": False})
-    message(response, is_user=False)
+    message(response, is_user=False, key=f"response_{len(st.session_state['messages'])}")
