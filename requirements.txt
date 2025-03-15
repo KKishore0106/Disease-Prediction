@@ -4,3 +4,5 @@ streamlit-chat
 scikit-learn
 torch
 transformers
+sentencepiece
+accelerate
