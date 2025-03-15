@@ -16,11 +16,10 @@ parkinsons_model = pickle.load(open('parkinsons_model.sav', 'rb'))
 def ask_ai(prompt):
     payload = {"inputs": prompt}
     response = requests.post(API_URL, headers=HEADERS, json=payload)
-    return response.json().get("generated_text", "Sorry, I couldn't generate a response.")
+    return response.json().get("generated_text", "I'm not sure. Can you try rephrasing?")
 
-# Streamlit UI Setup
-st.set_page_config(page_title="AI Health Chatbot", page_icon="💬")
-st.title("💬 AI Health Chatbot")
+st.set_page_config(page_title="Health AI Chatbot", page_icon="💬")
+st.title("🤖 AI Health Chatbot")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = [{"role": "assistant", "content": "Hi! Which disease would you like to check?"}]
@@ -29,15 +28,10 @@ if "messages" not in st.session_state:
 
 # Display chat messages
 for msg in st.session_state["messages"]:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+    message(msg["content"], is_user=(msg["role"] == "user"))
 
-# Disease selection
 if st.session_state["state"] == "select_disease":
-    with st.chat_message("assistant"):
-        st.write("Select a disease to check:")
-
-    disease = st.radio("", ["Diabetes", "Heart Disease", "Parkinson's"], key="disease")
+    disease = st.radio("Select a disease:", ["Diabetes", "Heart Disease", "Parkinson's"], key="disease")
     if st.button("Next"):
         if disease == "Diabetes":
             st.session_state["questions"] = ["Pregnancies", "Glucose", "BloodPressure", "SkinThickness", "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"]
@@ -51,14 +45,13 @@ if st.session_state["state"] == "select_disease":
         
         st.session_state["state"] = "ask_questions"
         st.session_state["current_question_index"] = 0
-        st.experimental_rerun()
+        st.rerun()
 
-# Asking questions for prediction
 elif st.session_state["state"] == "ask_questions":
     index = st.session_state["current_question_index"]
     if index < len(st.session_state["questions"]):
         question = st.session_state["questions"][index]
-        user_input = st.chat_input(f"Enter value for {question}:")
+        user_input = st.text_input(f"{question}:", key=f"input_{index}")
         
         if user_input:
             try:
@@ -72,15 +65,12 @@ elif st.session_state["state"] == "ask_questions":
         features = [st.session_state["inputs"][q] for q in st.session_state["questions"]]
         prediction = model.predict([features])
         result = "You have the disease." if prediction[0] == 1 else "You do not have the disease."
-
         suggestion = ask_ai(f"Give health advice for {st.session_state['state']} prevention and management.")
-        response = f"**{result}**\n\n**Suggestion:** {suggestion}"
-
+        response = f"{result}\n\n**Suggestion:** {suggestion}"
         st.session_state["messages"].append({"role": "assistant", "content": response})
-
-        # Reset state
+        
         st.session_state["state"] = "select_disease"
         st.session_state["inputs"] = {}
         st.session_state["questions"] = []
         st.session_state["current_question_index"] = 0
-        st.experimental_rerun()
+        st.rerun()
