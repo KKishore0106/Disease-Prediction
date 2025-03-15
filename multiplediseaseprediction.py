@@ -20,7 +20,7 @@ def ask_huggingface(prompt):
     return response.json()[0]["generated_text"]
 
 # Streamlit Chatbot UI
-st.set_page_config(page_title="AI Health Chatbot", page_icon="\ud83d\udcac", layout="wide")
+st.set_page_config(page_title="AI Health Chatbot", page_icon="💬")
 st.title("\ud83e\ude7a AI Health Chatbot")
 
 if "messages" not in st.session_state:
