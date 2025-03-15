@@ -21,7 +21,7 @@ def ask_huggingface(prompt):
 
 # Streamlit Chatbot UI
 st.set_page_config(page_title="AI Health Chatbot", page_icon="💬")
-st.title("\ud83e\ude7a AI Health Chatbot")
+st.title("AI Health Chatbot")
 
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
