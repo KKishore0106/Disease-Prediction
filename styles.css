@@ -1,0 +1,33 @@
+.chat-container {
+    max-width: 600px;
+    margin: auto;
+}
+
+.user-message {
+    background-color: #007bff;
+    color: white;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    max-width: 80%;
+    text-align: right;
+    float: right;
+    clear: both;
+}
+
+.assistant-message {
+    background-color: #f1f1f1;
+    color: black;
+    padding: 10px;
+    border-radius: 10px;
+    margin: 10px 0;
+    max-width: 80%;
+    text-align: left;
+    float: left;
+    clear: both;
+}
+
+.stTextInput {
+    width: 100%;
+    margin-top: 20px;
+}
