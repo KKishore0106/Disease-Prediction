@@ -1,8 +1,4 @@
-streamlit
-streamlit-option-menu==0.3.2
-streamlit-chat
+chainlit
+requests
 scikit-learn
-torch
-transformers
-sentencepiece
-accelerate
+pickle5
