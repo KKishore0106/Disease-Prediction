@@ -1,4 +1,5 @@
-chainlit
+streamlit
+pickle-mixin
 requests
 scikit-learn
-pickle5
+streamlit-chat
