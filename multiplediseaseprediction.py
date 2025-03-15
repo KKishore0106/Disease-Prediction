@@ -3,22 +3,24 @@ import streamlit as st
 from streamlit_chat import message
 from transformers import pipeline
 
-# Load Hugging Face Model for text classification
-classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+# Load LLM from Hugging Face (Mistral-7B)
+llm = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct", tokenizer="mistralai/Mistral-7B-Instruct")
 
-# Load models
+# Load prediction models
 diabetes_model = pickle.load(open('diabetes_model.sav', 'rb'))
-heart_disease_model = pickle.load(open('heart_disease_model.sav', 'rb'))
-parkinsons_model = pickle.load(open('parkinsons_model.sav', 'rb'))
 
-st.set_page_config(page_title="Health Chatbot", page_icon="💬", layout="wide")
-st.title("🩺 Health Prediction Chatbot")
+st.set_page_config(page_title="AI Health Chatbot", page_icon="💬", layout="wide")
+st.title("🤖 AI Health Chatbot")
 
-# Initialize session state
+# Initialize session state for conversation
 if "messages" not in st.session_state:
     st.session_state["messages"] = []
+if "state" not in st.session_state:
+    st.session_state["state"] = "initial"
+if "inputs" not in st.session_state:
+    st.session_state["inputs"] = {}
 
-# Display chat history with unique keys
+# Display chat history
 for i, msg in enumerate(st.session_state["messages"]):
     message(msg["content"], is_user=msg["is_user"], key=f"msg_{i}")
 
@@ -26,38 +28,65 @@ for i, msg in enumerate(st.session_state["messages"]):
 user_input = st.text_input("Describe your symptoms:", key="user_input")
 
 if user_input:
-    # Add user message
     st.session_state["messages"].append({"content": user_input, "is_user": True})
 
-    # Use Hugging Face model to classify input
-    labels = ["Diabetes", "Heart Disease", "Parkinson's"]
-    result = classifier(user_input, labels)
-    disease = result["labels"][0]  # Highest confidence label
+    # Step 1: Check if symptoms suggest diabetes
+    if st.session_state["state"] == "initial":
+        prompt = f"Based on the user's input: '{user_input}', do they have symptoms of diabetes?"
+        response = llm(prompt, max_length=150)[0]["generated_text"]
 
-    response = f"Based on your input, I suspect you might be asking about **{disease}**. Please enter your details for a prediction."
+        if "yes" in response.lower():
+            response += "\nIt looks like your symptoms might be related to **Diabetes**. Let’s check further. I'll ask you a few questions."
+            st.session_state["state"] = "asking_questions"
+        else:
+            response += "\nYour symptoms don’t seem strongly linked to diabetes, but it's always good to consult a doctor."
 
-    if disease == "Diabetes":
-        Pregnancies = st.number_input('Number of Pregnancies', min_value=0, step=1)
-        Glucose = st.number_input('Glucose Level', min_value=0)
-        BloodPressure = st.number_input('Blood Pressure value', min_value=0)
-        SkinThickness = st.number_input('Skin Thickness value', min_value=0)
-        Insulin = st.number_input('Insulin Level', min_value=0)
-        BMI = st.number_input('BMI value', min_value=0.0, format='%.2f')
-        DiabetesPedigreeFunction = st.number_input('Diabetes Pedigree Function value', min_value=0.0, format='%.2f')
-        Age = st.number_input('Age of the Person', min_value=0, step=1)
+    # Step 2: Ask follow-up questions
+    elif st.session_state["state"] == "asking_questions":
+        questions = {
+            "Pregnancies": "How many times have you been pregnant? (Enter 0 if male)",
+            "Glucose": "What is your glucose level?",
+            "BloodPressure": "What is your blood pressure value?",
+            "SkinThickness": "What is your skin thickness measurement?",
+            "Insulin": "What is your insulin level?",
+            "BMI": "What is your BMI value?",
+            "DiabetesPedigreeFunction": "What is your diabetes pedigree function value?",
+            "Age": "How old are you?"
+        }
 
-        if st.button("Predict"):
-            prediction = diabetes_model.predict([[Pregnancies, Glucose, BloodPressure, SkinThickness, Insulin, BMI, DiabetesPedigreeFunction, Age]])
-            response = "You are diabetic." if prediction[0] == 1 else "You are not diabetic."
+        unanswered = [q for q in questions if q not in st.session_state["inputs"]]
+        if unanswered:
+            question = unanswered[0]
+            response = questions[question]
+            st.session_state["state"] = "collecting_data"
+            st.session_state["current_question"] = question
+        else:
+            st.session_state["state"] = "predicting"
 
-    elif disease == "Heart Disease":
-        response = "I see you are asking about heart disease. Please enter your details for a prediction."
-        # Add heart disease input fields here...
+    # Step 3: Collect user responses
+    elif st.session_state["state"] == "collecting_data":
+        question = st.session_state["current_question"]
+        try:
+            value = float(user_input)
+            st.session_state["inputs"][question] = value
+            response = "Noted! Let's move to the next question."
+            st.session_state["state"] = "asking_questions"
+        except ValueError:
+            response = "Please enter a valid number."
 
-    elif disease == "Parkinson's":
-        response = "I see you are asking about Parkinson’s. Please enter your details for a prediction."
-        # Add Parkinson's input fields here...
+    # Step 4: Make prediction
+    elif st.session_state["state"] == "predicting":
+        features = [st.session_state["inputs"][q] for q in [
+            "Pregnancies", "Glucose", "BloodPressure", "SkinThickness",
+            "Insulin", "BMI", "DiabetesPedigreeFunction", "Age"
+        ]]
+        prediction = diabetes_model.predict([features])
+        response = "You **have diabetes**." if prediction[0] == 1 else "You **do not have diabetes**."
 
-    # Add chatbot response
+        # Reset conversation
+        st.session_state["state"] = "initial"
+        st.session_state["inputs"] = {}
+
+    # Display chatbot response
     st.session_state["messages"].append({"content": response, "is_user": False})
     message(response, is_user=False, key=f"response_{len(st.session_state['messages'])}")
