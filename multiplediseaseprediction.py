@@ -1,7 +1,10 @@
 import streamlit as st
 import streamlit.components.v1 as components  
 
-# Inject CSS into Streamlit
+# ✅ Move this to the first line after imports
+st.set_page_config(page_title="Medical Chatbot", layout="wide")
+
+# Inject CSS
 st.markdown(
     """
     <style>
@@ -121,6 +124,6 @@ chatbot_html = """
 """
 
 # Display chatbot UI in Streamlit
-st.set_page_config(page_title="Medical Chatbot")
 st.title("Medical Chatbot 💬")
 components.html(chatbot_html, height=600, scrolling=True)
+
