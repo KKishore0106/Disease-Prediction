@@ -1,4 +1,5 @@
 import streamlit as st
+import numpy as np
 import pickle
 import requests
 
@@ -55,7 +56,8 @@ disease_fields = {
 def get_prediction(disease, input_values):
     """Runs the ML model for the given disease and returns risk level."""
     try:
-        input_data = [float(value) for value in input_values.values()]
+        input_data = np.array([list(map(float, input_values.values()))])  # Convert to 2D array
+
         if disease == "Diabetes" and diabetes_model:
             prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
