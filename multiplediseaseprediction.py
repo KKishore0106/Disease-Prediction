@@ -54,18 +54,17 @@ disease_fields = {
 
 # **5️⃣ Predict Function**
 def get_prediction(disease, input_values):
-    """Runs the ML model for the given disease and returns risk level."""
-    try:
-        input_data = np.array(list(map(float, input_values.values()))).reshape(1, -1)
-
+    # Convert to a NumPy array (float conversion)
+    input_data = np.array(list(map(float, input_values.values()))).reshape(1, -1)
+    
         if disease == "Diabetes" and diabetes_model:
             prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Heart Disease" and heart_disease_model:
-            prediction = heart_disease_model.predict([input_data])[0]
+            prediction = heart_disease_model.predict([input_data])[0][1]
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Parkinson's" and parkinsons_model:
-            prediction = parkinsons_model.predict([input_data])[0]
+            prediction = parkinsons_model.predict([input_data])[0][1]
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         else:
             return "⚠️ Model not available.", None
