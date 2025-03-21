@@ -59,7 +59,7 @@ def get_prediction(disease, input_values):
         input_data = np.array(list(map(float, input_values.values()))).reshape(1, -1)
 
         if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict_proba(input_data)[0][1]  # Probability for class 1
+            prediction = diabetes_model.predict(input_data)[0][1]  # Probability for class 1
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
 
         elif disease == "Heart Disease" and heart_disease_model: 
