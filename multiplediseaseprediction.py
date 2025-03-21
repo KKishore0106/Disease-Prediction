@@ -65,8 +65,7 @@ def get_prediction(disease, input_values):
     elif disease == "Parkinson's" and parkinsons_model:
         prediction = parkinsons_model.predict([input_data])[0][1]
         risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
-    
-        else:
+    else:
             return "⚠️ Model not available.", None
         
         return f"Risk Level: {risk_level}", risk_level
