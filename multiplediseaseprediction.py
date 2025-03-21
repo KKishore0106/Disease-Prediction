@@ -56,7 +56,7 @@ disease_fields = {
 def get_prediction(disease, input_values):
     """Runs the ML model for the given disease and returns risk level."""
     try:
-        input_data = np.array([list(map(float, input_values.values()))])  # Convert to 2D array
+        input_data = np.array(list(map(float, input_values.values()))).reshape(1, -1)
 
         if disease == "Diabetes" and diabetes_model:
             prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
