@@ -94,8 +94,8 @@ if prompt:
         st.markdown(prompt)
 
     if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
-        response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
-        st.session_state.step = 1
+         response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
+         st.session_state.step = 1
 
     elif st.session_state.step == 1 and prompt in disease_fields:
         st.session_state.disease_name = prompt
