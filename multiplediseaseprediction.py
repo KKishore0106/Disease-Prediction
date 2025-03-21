@@ -289,10 +289,21 @@ if prompt:
             response = "No problem. Is there another disease you'd like to check (Diabetes, Heart Disease, or Parkinson's), or do you have other health questions I can help with?"
             st.session_state.conversation_state = "general"
     
-    # COLLECTING INPUTS STATE
+    # COLLECTING INPUTS STATE - THIS IS THE REPLACED SECTION
     elif st.session_state.conversation_state == "collecting_inputs":
         disease = st.session_state.disease_name
         fields = disease_fields[disease]
+        
+        # Make sure field_keys is properly initialized
+        if not hasattr(st.session_state, 'field_keys') or st.session_state.field_keys is None:
+            st.session_state.field_keys = list(fields.keys())
+        
+        # Make sure current_field_index is within bounds
+        if st.session_state.current_field_index >= len(st.session_state.field_keys):
+            st.session_state.current_field_index = len(st.session_state.field_keys) - 1
+        
+        # Now safely get the current field
+        current_field = st.session_state.field_keys[st.session_state.current_field_index]
         
         # Check if user wants to modify a previous value
         modify_patterns = ["change", "modify", "edit", "update", "fix", "correct", "redo"]
