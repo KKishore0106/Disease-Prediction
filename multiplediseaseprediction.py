@@ -116,6 +116,9 @@ if prompt:
 
     # Step 2: Collecting medical values
     elif st.session_state.step == 2 and st.session_state.disease_name:
+        if st.session_state.current_field is None:
+        st.session_state.current_field = 0 
+        
         field_name = disease_fields[st.session_state.disease_name][st.session_state.current_field]
         st.session_state.input_values[field_name] = prompt
         
