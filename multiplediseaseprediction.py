@@ -507,3 +507,17 @@ with st.sidebar:
     - Answer general health questions
     - Assess risk for diabetes, heart disease, and Parkinson's
     - Analyze symptoms you might
+ - Provide personalized health suggestions
+    
+    **Important Disclaimer:** This tool provides general information only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions regarding a medical condition.
+    """)
+
+    st.header("How to Use")
+    st.markdown("""
+    1. **Ask health questions** - Type any health-related question
+    2. **Check disease risk** - Say "Check my risk for diabetes" (or heart disease/Parkinson's)
+    3. **Describe symptoms** - Tell the bot about any symptoms you're experiencing
+    4. **Get suggestions** - Ask for personalized health recommendations
+    
+    You can always type "change [field name]" to modify a previously entered value.
+    """)
