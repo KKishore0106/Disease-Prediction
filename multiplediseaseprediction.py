@@ -28,9 +28,10 @@ def chat_with_mistral(prompt):
         response = requests.post(
             f"https://api-inference.huggingface.co/models/{MODEL_NAME}",
             headers=headers,
-            json={"inputs": prompt}  # Only sends user prompt
+            json={"inputs": prompt}  
         )
-        return response.json()[0]['generated_text']
+        data = response.json()
+        return data[0]['generated_text'] if isinstance(data, list) else "⚠️ AI response error."
     except Exception as e:
         return f"⚠️ AI Error: {str(e)}"
 
@@ -46,7 +47,7 @@ def get_prediction(disease, input_values):
     try:
         input_data = [float(value) for value in input_values.values()]
         if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict([input_data])[0][1]
+            prediction = diabetes_model.predict_proba([input_data])[0][1]  # Probability for class 1
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Heart Disease" and heart_disease_model:
             prediction = heart_disease_model.predict([input_data])[0]
@@ -57,6 +58,8 @@ def get_prediction(disease, input_values):
         else:
             return "⚠️ Model not available.", None
         return f"Risk Level: {risk_level}", risk_level
+    except ValueError:
+        return "⚠️ Invalid input detected. Please enter numeric values only.", None
     except Exception as e:
         return f"⚠️ Unexpected error: {str(e)}", None
 
@@ -115,15 +118,20 @@ if prompt:
     elif st.session_state.step == 2 and st.session_state.disease_name:
         field_name = disease_fields[st.session_state.disease_name][st.session_state.current_field]
         st.session_state.input_values[field_name] = prompt
-        st.session_state.current_field += 1
+        
+        try:
+            float(prompt)  # Ensure valid input
+            st.session_state.current_field += 1
 
-        if st.session_state.current_field < len(disease_fields[st.session_state.disease_name]):
-            response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
-        else:
-            diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
-            st.session_state.risk_level = risk_level  # Store risk level in session
-            response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
-            st.session_state.step = 3
+            if st.session_state.current_field < len(disease_fields[st.session_state.disease_name]):
+                response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
+            else:
+                diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
+                st.session_state.risk_level = risk_level  # Store risk level in session
+                response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
+                st.session_state.step = 3
+        except ValueError:
+            response = "⚠️ Please enter a valid number."
 
     # Step 3: Providing health suggestions
     elif st.session_state.step == 3:
@@ -138,5 +146,4 @@ if prompt:
         st.markdown(response)
 
 st.rerun()
-
 
