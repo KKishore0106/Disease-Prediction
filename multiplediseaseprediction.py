@@ -144,6 +144,7 @@ if prompt:
     st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant", avatar="🧑‍⚕️"):
         st.markdown(response)
-        if st.session_state.step != 0:
-            st.rerun()
+        
+
+st.rerun()
 
