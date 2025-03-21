@@ -18,7 +18,7 @@ heart_disease_model = load_model('heart_disease_model.sav')
 parkinsons_model = load_model('parkinsons_model.sav')
 
 # Hugging Face API setup
-HF_API_TOKEN = "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"
+HF_API_TOKEN = "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"  # Store securely in a .env file or secrets.toml
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"
 headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
@@ -46,7 +46,7 @@ def get_prediction(disease, input_values):
     try:
         input_data = [float(value) for value in input_values.values()]
         if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict([input_data])[0][1]
+            prediction = diabetes_model.predict([input_data])[0]
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Heart Disease" and heart_disease_model:
             prediction = heart_disease_model.predict([input_data])[0]
