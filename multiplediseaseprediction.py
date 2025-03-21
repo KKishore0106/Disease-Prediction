@@ -57,21 +57,21 @@ def get_prediction(disease, input_values):
     # Convert to a NumPy array (float conversion)
     input_data = np.array(list(map(float, input_values.values()))).reshape(1, -1)
     if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
-            risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
-        elif disease == "Heart Disease" and heart_disease_model:
-            prediction = heart_disease_model.predict([input_data])[0][1]
-            risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
-        elif disease == "Parkinson's" and parkinsons_model:
-            prediction = parkinsons_model.predict([input_data])[0][1]
-            risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
-        else:
-            return "⚠️ Model not available.", None
+        prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
+        risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
+    elif disease == "Heart Disease" and heart_disease_model:
+        prediction = heart_disease_model.predict([input_data])[0][1]
+        risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
+    elif disease == "Parkinson's" and parkinsons_model:
+        prediction = parkinsons_model.predict([input_data])[0][1]
+        risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
+    else:
+        return "⚠️ Model not available.", None
         return f"Risk Level: {risk_level}", risk_level
-    except ValueError:
-        return "⚠️ Invalid input detected. Please enter numeric values only.", None
-    except Exception as e:
-        return f"⚠️ Unexpected error: {str(e)}", None
+except ValueError:
+return "⚠️ Invalid input detected. Please enter numeric values only.", None
+except Exception as e:
+return f"⚠️ Unexpected error: {str(e)}", None
 
 # **6️⃣ Streamlit UI**
 st.markdown("""
