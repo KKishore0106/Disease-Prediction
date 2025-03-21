@@ -92,12 +92,12 @@ if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🙂"):
         st.markdown(prompt)
-
-    if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
+        
+        if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
         response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
         st.session_state.step = 1
 
-    elif st.session_state.step == 1 and prompt in disease_fields:
+elif st.session_state.step == 1 and prompt in disease_fields:
         st.session_state.disease_name = prompt
         st.session_state.input_values = {}
         st.session_state.current_field = 0
