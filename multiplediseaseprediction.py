@@ -67,7 +67,7 @@ def get_prediction(disease, input_values):
         risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
     else:
         return "⚠️ Model not available.", None
-     return f"Risk Level: {risk_level}", risk_level
+        return f"Risk Level: {risk_level}", risk_level
 except ValueError:
      return "⚠️ Invalid input detected. Please enter numeric values only.", None
 except Exception as e:
