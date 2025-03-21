@@ -78,7 +78,7 @@ if "input_values" not in st.session_state:
 if "current_field" not in st.session_state:
     st.session_state.current_field = None
 if "risk_level" not in st.session_state:
-    st.session_state.risk_level = None
+    st.session_state.risk_level = None  # ✅ Fix risk_level issue
 
 # Display chat history
 for message in st.session_state.messages:
@@ -92,12 +92,12 @@ if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user", avatar="🙂"):
         st.markdown(prompt)
-        
-        if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
+
+    if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
         response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
         st.session_state.step = 1
 
-elif st.session_state.step == 1 and prompt in disease_fields:
+    elif st.session_state.step == 1 and prompt in disease_fields:
         st.session_state.disease_name = prompt
         st.session_state.input_values = {}
         st.session_state.current_field = 0
@@ -113,15 +113,12 @@ elif st.session_state.step == 1 and prompt in disease_fields:
             response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
         else:
             diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
-            st.session_state.risk_level = risk_level  # Store risk level in session state
+            st.session_state.risk_level = risk_level  # ✅ Store risk_level in session state
             response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
             st.session_state.step = 3
 
     elif st.session_state.step == 3 and prompt.lower() in ["yes", "y"]:
-        if st.session_state.risk_level:  # Ensure risk_level is defined before using it
-            response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {st.session_state.risk_level}.")
-        else:
-            response = "⚠️ Risk level is not available. Please redo the prediction."
+        response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {st.session_state.risk_level}.")
         st.session_state.step = 0
 
     elif st.session_state.step == 3 and prompt.lower() in ["no", "n"]:
@@ -135,5 +132,5 @@ elif st.session_state.step == 1 and prompt in disease_fields:
     with st.chat_message("assistant", avatar="🧑‍⚕️"):
         st.markdown(response)
 
-st.rerun()
+st.experimental_rerun()
 
