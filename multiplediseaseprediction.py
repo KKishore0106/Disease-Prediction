@@ -28,7 +28,7 @@ def chat_with_mistral(prompt):
         response = requests.post(
             f"https://api-inference.huggingface.co/models/{MODEL_NAME}",
             headers=headers,
-            json={"inputs": f"You are a medical AI chatbot. {prompt}"}
+            json={"inputs": prompt}  # Only sends user prompt
         )
         return response.json()[0]['generated_text']
     except Exception as e:
@@ -66,7 +66,7 @@ st.markdown("""
     <p style='text-align: center; font-size: 18px;'>Your AI assistant for health predictions and advice.</p>
 """, unsafe_allow_html=True)
 
-# Chat state management
+# Initialize session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "step" not in st.session_state:
@@ -78,7 +78,7 @@ if "input_values" not in st.session_state:
 if "current_field" not in st.session_state:
     st.session_state.current_field = None
 if "risk_level" not in st.session_state:
-    st.session_state.risk_level = None  # ✅ Fix risk_level issue
+    st.session_state.risk_level = None  # Fixes "risk_level not defined" issue
 
 # Display chat history
 for message in st.session_state.messages:
@@ -93,10 +93,17 @@ if prompt:
     with st.chat_message("user", avatar="🙂"):
         st.markdown(prompt)
 
-    if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
-        response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
-        st.session_state.step = 1
+    response = ""  # Initialize response
 
+    # Step 0: Initial greeting
+    if st.session_state.step == 0:
+        if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
+            response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
+            st.session_state.step = 1
+        else:
+            response = chat_with_mistral(prompt)  # General questions
+
+    # Step 1: Selecting a disease
     elif st.session_state.step == 1 and prompt in disease_fields:
         st.session_state.disease_name = prompt
         st.session_state.input_values = {}
@@ -104,6 +111,7 @@ if prompt:
         response = f"Great! Let's check for {prompt}. Please enter your {disease_fields[prompt][0]}:"
         st.session_state.step = 2
 
+    # Step 2: Collecting medical values
     elif st.session_state.step == 2 and st.session_state.disease_name:
         field_name = disease_fields[st.session_state.disease_name][st.session_state.current_field]
         st.session_state.input_values[field_name] = prompt
@@ -113,24 +121,22 @@ if prompt:
             response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
         else:
             diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
-            st.session_state.risk_level = risk_level  # ✅ Store risk_level in session state
+            st.session_state.risk_level = risk_level  # Store risk level in session
             response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
             st.session_state.step = 3
 
-    elif st.session_state.step == 3 and prompt.lower() in ["yes", "y"]:
-        response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {st.session_state.risk_level}.")
-        st.session_state.step = 0
-
-    elif st.session_state.step == 3 and prompt.lower() in ["no", "n"]:
-        response = "Okay! Let me know if you need anything else. 😊"
-        st.session_state.step = 0  # Reset the chat
-
-    else:
-        response = chat_with_mistral(prompt)  # Only call AI when user asks open-ended questions
+    # Step 3: Providing health suggestions
+    elif st.session_state.step == 3:
+        if prompt.lower() in ["yes", "y"]:
+            response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {st.session_state.risk_level}.")
+        else:
+            response = "Okay! Let me know if you need anything else. 😊"
+        st.session_state.step = 0  # Reset the chat flow
 
     st.session_state.messages.append({"role": "assistant", "content": response})
     with st.chat_message("assistant", avatar="🧑‍⚕️"):
         st.markdown(response)
 
 st.rerun()
+
 
