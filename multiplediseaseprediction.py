@@ -18,7 +18,7 @@ heart_disease_model = load_model('heart_disease_model.sav')
 parkinsons_model = load_model('parkinsons_model.sav')
 
 # Hugging Face API setup
-HF_API_TOKEN = "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"  # Store securely in a .env file or secrets.toml
+HF_API_TOKEN = "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"
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"
 headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
@@ -46,7 +46,7 @@ def get_prediction(disease, input_values):
     try:
         input_data = [float(value) for value in input_values.values()]
         if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict([input_data])[0]
+            prediction = diabetes_model.predict([input_data])[0][1]
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Heart Disease" and heart_disease_model:
             prediction = heart_disease_model.predict([input_data])[0]
@@ -77,6 +77,8 @@ if "input_values" not in st.session_state:
     st.session_state.input_values = {}
 if "current_field" not in st.session_state:
     st.session_state.current_field = None
+if "risk_level" not in st.session_state:
+    st.session_state.risk_level = None
 
 # Display chat history
 for message in st.session_state.messages:
@@ -111,11 +113,15 @@ if prompt:
             response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
         else:
             diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
+            st.session_state.risk_level = risk_level  # Store risk level in session state
             response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
             st.session_state.step = 3
 
     elif st.session_state.step == 3 and prompt.lower() in ["yes", "y"]:
-        response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {risk_level}.")
+        if st.session_state.risk_level:  # Ensure risk_level is defined before using it
+            response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {st.session_state.risk_level}.")
+        else:
+            response = "⚠️ Risk level is not available. Please redo the prediction."
         st.session_state.step = 0
 
     elif st.session_state.step == 3 and prompt.lower() in ["no", "n"]:
@@ -130,3 +136,4 @@ if prompt:
         st.markdown(response)
 
 st.rerun()
+
