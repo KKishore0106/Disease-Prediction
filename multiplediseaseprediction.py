@@ -18,8 +18,8 @@ heart_disease_model = load_model('heart_disease_model.sav')
 parkinsons_model = load_model('parkinsons_model.sav')
 
 # Hugging Face API setup
-HF_API_TOKEN = "your_huggingface_api_token"
-MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.1"
+HF_API_TOKEN = "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"
+MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"
 
 headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
 
