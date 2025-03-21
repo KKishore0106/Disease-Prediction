@@ -132,5 +132,5 @@ if prompt:
     with st.chat_message("assistant", avatar="🧑‍⚕️"):
         st.markdown(response)
 
-st.experimental_rerun()
+st.rerun()
 
