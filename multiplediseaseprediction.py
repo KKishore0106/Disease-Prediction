@@ -1,129 +1,127 @@
 import streamlit as st
-import streamlit.components.v1 as components  
+import pickle
+import ollama
 
-# ✅ Move this to the first line after imports
-st.set_page_config(page_title="Medical Chatbot", layout="wide")
+# Set page config at the very beginning
+st.set_page_config(page_title="Medical AI Chatbot", layout="wide")
 
-# Inject CSS
-st.markdown(
-    """
-    <style>
-    body,html{
-        height: 100%;
-        margin: 0;
-        background: rgb(44, 47, 59);
-        background: -webkit-linear-gradient(to right, rgb(40, 59, 34), rgb(54, 60, 70), rgb(32, 32, 43));
-        background: linear-gradient(to right, rgb(38, 51, 61), rgb(50, 55, 65), rgb(33, 33, 78));
-    }
-    .chat{
-        margin-top: auto;
-        margin-bottom: auto;
-    }
-    .card{
-        height: 500px;
-        border-radius: 15px !important;
-        background-color: rgba(0,0,0,0.4) !important;
-    }
-    .msg_card_body{
-        overflow-y: auto;
-    }
-    .card-header{
-        border-radius: 15px 15px 0 0 !important;
-        border-bottom: 0 !important;
-    }
-    .card-footer{
-        border-radius: 0 0 15px 15px !important;
-        border-top: 0 !important;
-    }
-    .type_msg{
-        background-color: rgba(0,0,0,0.3) !important;
-        border:0 !important;
-        color:white !important;
-        height: 60px !important;
-        overflow-y: auto;
-    }
-    .type_msg:focus{
-        box-shadow:none !important;
-        outline:0px !important;
-    }
-    .send_btn{
-        border-radius: 0 15px 15px 0 !important;
-        background-color: rgba(0,0,0,0.3) !important;
-        border:0 !important;
-        color: white !important;
-        cursor: pointer;
-    }
-    .msg_cotainer{
-        margin-top: auto;
-        margin-bottom: auto;
-        margin-left: 10px;
-        border-radius: 25px;
-        background-color: rgb(82, 172, 255);
-        padding: 10px;
-        position: relative;
-    }
-    .msg_cotainer_send{
-        margin-top: auto;
-        margin-bottom: auto;
-        margin-right: 10px;
-        border-radius: 25px;
-        background-color: #58cc71;
-        padding: 10px;
-        position: relative;
-    }
-    .msg_time{
-        position: absolute;
-        left: 0;
-        bottom: -15px;
-        color: rgba(255,255,255,0.5);
-        font-size: 10px;
-    }
-    .msg_time_send{
-        position: absolute;
-        right:0;
-        bottom: -15px;
-        color: rgba(255,255,255,0.5);
-        font-size: 10px;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Load the saved models with error handling
+def load_model(filename):
+    try:
+        return pickle.load(open(filename, 'rb'))
+    except Exception as e:
+        st.error(f"Error loading {filename}: {e}")
+        return None
 
-# Define chatbot HTML template
-chatbot_html = """
-<div class="container-fluid h-100">
-    <div class="row justify-content-center h-100">        
-        <div class="col-md-8 col-xl-6 chat">
-            <div class="card">
-                <div class="card-header msg_head">
-                    <div class="d-flex bd-highlight">
-                        <div class="img_cont">
-                            <img src="https://www.prdistribution.com/spirit/uploads/pressreleases/2019/newsreleases/d83341deb75c4c4f6b113f27b1e42cd8-chatbot-florence-already-helps-thousands-of-patients-to-remember-their-medication.png" class="rounded-circle user_img">
-                            <span class="online_icon"></span>
-                        </div>
-                        <div class="user_info">
-                            <span>Medical Chatbot</span>
-                            <p>Ask me anything!</p>
-                        </div>
-                    </div>
-                </div>
-                <div id="messageFormeight" class="card-body msg_card_body"></div>
-                <div class="card-footer">
-                    <form id="messageArea" class="input-group">
-                        <input type="text" id="text" name="msg" placeholder="Type your message..." autocomplete="off" class="form-control type_msg" required/>
-                        <div class="input-group-append">
-                            <button type="submit" id="send" class="input-group-text send_btn"><i class="fas fa-location-arrow"></i></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-"""
+diabetes_model = load_model('diabetes_model.sav')
+heart_disease_model = load_model('heart_disease_model.sav')
+parkinsons_model = load_model('parkinsons_model.sav')
 
-# Display chatbot UI in Streamlit
-st.title("Medical Chatbot 💬")
-components.html(chatbot_html, height=600, scrolling=True)
+# Initialize session state
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "step" not in st.session_state:
+    st.session_state.step = 0
+if "disease_name" not in st.session_state:
+    st.session_state.disease_name = None
+if "input_values" not in st.session_state:
+    st.session_state.input_values = {}
+if "current_field" not in st.session_state:
+    st.session_state.current_field = None
+
+def chat_with_gemma(prompt):
+    try:
+        response = ollama.chat(model="gemma:2b", messages=[{"role": "user", "content": prompt}])
+        return response.get("message", {}).get("content", "Sorry, I couldn't process that.")
+    except Exception as e:
+        return f"⚠️ AI Error: {str(e)}"
+
+def generate_suggestion(disease_name, risk_level, input_values):
+    prompt = f"User input values: {input_values}\nRisk Level: {risk_level}\nProvide personalized health suggestions for {disease_name} in a friendly tone."
+    return chat_with_gemma(prompt)
+
+def get_prediction(disease, input_values):
+    try:
+        input_data = [float(value) for value in input_values.values()]
+        
+        if disease == "Diabetes" and diabetes_model:
+            prediction = diabetes_model.predict([input_data])[0][1]
+            risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
+            diagnosis = f"Based on your inputs, your estimated risk level for diabetes is {risk_level} ({prediction * 100:.1f}% probability)."
+        elif disease == "Heart Disease" and heart_disease_model:
+            prediction = heart_disease_model.predict([input_data])[0]
+            risk_level = "High" if prediction == 1 else "Low"
+            diagnosis = f"Based on your inputs, you {'might have' if prediction == 1 else 'are at low risk for'} heart disease."
+        elif disease == "Parkinson's" and parkinsons_model:
+            prediction = parkinsons_model.predict([input_data])[0]
+            risk_level = "High" if prediction == 1 else "Low"
+            diagnosis = f"Based on your inputs, you {'might have' if prediction == 1 else 'are at low risk for'} Parkinson's."
+        else:
+            return "⚠️ Model not available.", None
+        
+        return diagnosis, risk_level
+    except Exception as e:
+        return f"⚠️ Unexpected error: {str(e)}", None
+
+# Streamlit UI
+st.markdown("""
+    <h1 style='text-align: center;'>🩺 AI Medical Chatbot</h1>
+    <p style='text-align: center; font-size: 18px;'>Your friendly AI assistant for health predictions and advice.</p>
+""", unsafe_allow_html=True)
+
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"], avatar="🧑‍⚕️" if message["role"] == "assistant" else "🙂"):
+        st.markdown(message["content"])
+
+# User input
+prompt = st.chat_input("Type your health question here...")
+
+if prompt:
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user", avatar="🙂"):
+        st.markdown(prompt)
+
+    if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
+        response = "Hello! 😊 How can I assist you with your health today?"
+        st.session_state.messages.append({"role": "assistant", "content": response})
+    elif st.session_state.step == 0:
+        diseases = ["Diabetes", "Heart Disease", "Parkinson's"]
+        for disease in diseases:
+            if disease.lower() in prompt.lower():
+                st.session_state.disease_name = disease
+                st.session_state.step = 1
+                st.session_state.input_values = {}
+                st.session_state.current_field = None
+                st.session_state.messages.append({"role": "assistant", "content": f"Alright! Let's check your {disease} risk. I'll ask a few questions."})
+                st.rerun()
+        st.session_state.messages.append({"role": "assistant", "content": "Which condition would you like to check? (Diabetes, Heart Disease, Parkinson's)"})
+
+elif st.session_state.step == 1:
+    disease_fields = {
+        "Diabetes": ["Pregnancy Count", "Glucose Level", "Blood Pressure", "Skin Thickness (mm)", "Insulin Level", "BMI", "Diabetes Pedigree Function", "Age"],
+        "Heart Disease": ["Age", "Sex", "Chest Pain Type", "Resting Blood Pressure", "Serum Cholesterol", "Fasting Blood Sugar", "Resting ECG Result", "Max Heart Rate", "Exercise-Induced Angina", "ST Depression", "Slope of ST", "Major Vessels", "Thalassemia"],
+        "Parkinson's": ["MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)", "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "Jitter:DDP", "MDVP:Shimmer", "MDVP:Shimmer(dB)"]
+    }
+    fields = disease_fields[st.session_state.disease_name]
+    
+    if st.session_state.current_field is None:
+        st.session_state.current_field = fields[0]
+    
+    st.session_state.messages.append({"role": "assistant", "content": st.session_state.current_field})
+    
+    if prompt:
+        try:
+            st.session_state.input_values[st.session_state.current_field] = float(prompt)
+            if len(st.session_state.input_values) < len(fields):
+                st.session_state.current_field = fields[len(st.session_state.input_values)]
+            else:
+                st.session_state.step = 2
+                diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
+                st.session_state.messages.append({"role": "assistant", "content": diagnosis})
+                st.session_state.step = 3
+        except ValueError:
+            st.session_state.messages.append({"role": "assistant", "content": "⚠️ Please enter a valid number."})
+
+st.rerun()
 
