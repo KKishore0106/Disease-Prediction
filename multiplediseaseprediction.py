@@ -47,7 +47,7 @@ def get_prediction(disease, input_values):
     try:
         input_data = [float(value) for value in input_values.values()]
         if disease == "Diabetes" and diabetes_model:
-            prediction = diabetes_model.predict_proba([input_data])[0][1]  # Probability for class 1
+            prediction = diabetes_model.predict([input_data])[0][1]  # Probability for class 1
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
         elif disease == "Heart Disease" and heart_disease_model:
             prediction = heart_disease_model.predict([input_data])[0]
