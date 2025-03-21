@@ -2,10 +2,10 @@ import streamlit as st
 import pickle
 import requests
 
-# Set page config at the very beginning
+# Set page config
 st.set_page_config(page_title="Medical AI Chatbot", layout="wide")
 
-# Load the saved models with error handling
+# Load ML models
 def load_model(filename):
     try:
         return pickle.load(open(filename, 'rb'))
@@ -18,11 +18,9 @@ heart_disease_model = load_model('heart_disease_model.sav')
 parkinsons_model = load_model('parkinsons_model.sav')
 
 # Hugging Face API setup
-HF_API_TOKEN = "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"
+HF_API_TOKEN = "your_huggingface_api_token"
 MODEL_NAME = "mistralai/Mistral-7B-Instruct-v0.3"
-
 headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
-
 
 def chat_with_mistral(prompt):
     try:
@@ -35,42 +33,38 @@ def chat_with_mistral(prompt):
     except Exception as e:
         return f"⚠️ AI Error: {str(e)}"
 
-
-def generate_suggestion(disease_name, risk_level, input_values):
-    prompt = f"User input values: {input_values}\nRisk Level: {risk_level}\nProvide personalized health suggestions for {disease_name} in a friendly tone."
-    return chat_with_mistral(prompt)
-
+# Disease input fields
+disease_fields = {
+    "Diabetes": ["Pregnancy Count", "Glucose Level", "Blood Pressure", "Skin Thickness (mm)", "Insulin Level", "BMI", "Diabetes Pedigree Function", "Age"],
+    "Heart Disease": ["Age", "Sex", "Chest Pain Type", "Resting Blood Pressure", "Serum Cholesterol", "Fasting Blood Sugar", "Resting ECG Result", "Max Heart Rate", "Exercise-Induced Angina", "ST Depression", "Slope of ST", "Major Vessels", "Thalassemia"],
+    "Parkinson's": ["MDVP:Fo(Hz)", "MDVP:Fhi(Hz)", "MDVP:Flo(Hz)", "MDVP:Jitter(%)", "MDVP:Jitter(Abs)", "MDVP:RAP", "MDVP:PPQ", "Jitter:DDP", "MDVP:Shimmer", "MDVP:Shimmer(dB)"]
+}
 
 def get_prediction(disease, input_values):
     try:
         input_data = [float(value) for value in input_values.values()]
-        
         if disease == "Diabetes" and diabetes_model:
             prediction = diabetes_model.predict([input_data])[0][1]
             risk_level = "High" if prediction >= 0.7 else "Medium" if prediction >= 0.4 else "Low"
-            diagnosis = f"Based on your inputs, your estimated risk level for diabetes is {risk_level} ({prediction * 100:.1f}% probability)."
         elif disease == "Heart Disease" and heart_disease_model:
             prediction = heart_disease_model.predict([input_data])[0]
             risk_level = "High" if prediction == 1 else "Low"
-            diagnosis = f"Based on your inputs, you {'might have' if prediction == 1 else 'are at low risk for'} heart disease."
         elif disease == "Parkinson's" and parkinsons_model:
             prediction = parkinsons_model.predict([input_data])[0]
             risk_level = "High" if prediction == 1 else "Low"
-            diagnosis = f"Based on your inputs, you {'might have' if prediction == 1 else 'are at low risk for'} Parkinson's."
         else:
             return "⚠️ Model not available.", None
-        
-        return diagnosis, risk_level
+        return f"Risk Level: {risk_level}", risk_level
     except Exception as e:
         return f"⚠️ Unexpected error: {str(e)}", None
 
 # Streamlit UI
 st.markdown("""
     <h1 style='text-align: center;'>🩺 AI Medical Chatbot</h1>
-    <p style='text-align: center; font-size: 18px;'>Your friendly AI assistant for health predictions and advice.</p>
+    <p style='text-align: center; font-size: 18px;'>Your AI assistant for health predictions and advice.</p>
 """, unsafe_allow_html=True)
 
-# Initialize session state
+# Chat state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "step" not in st.session_state:
@@ -82,7 +76,7 @@ if "input_values" not in st.session_state:
 if "current_field" not in st.session_state:
     st.session_state.current_field = None
 
-# Display chat history
+# Chat history
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar="🧑‍⚕️" if message["role"] == "assistant" else "🙂"):
         st.markdown(message["content"])
@@ -96,12 +90,34 @@ if prompt:
         st.markdown(prompt)
     
     if prompt.lower() in ["hi", "hello", "hiii", "hey"]:
-        response = "Hello! 😊 How can I assist you with your health today?"
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        response = "Hello! 😊 Which disease do you want to check: Diabetes, Heart Disease, or Parkinson's?"
+        st.session_state.step = 1
+    elif st.session_state.step == 1 and prompt in disease_fields:
+        st.session_state.disease_name = prompt
+        st.session_state.input_values = {}
+        st.session_state.current_field = 0
+        response = f"Great! Let's check for {prompt}. Please enter your {disease_fields[prompt][0]}:"
+        st.session_state.step = 2
+    elif st.session_state.step == 2 and st.session_state.disease_name:
+        field_name = disease_fields[st.session_state.disease_name][st.session_state.current_field]
+        st.session_state.input_values[field_name] = prompt
+        st.session_state.current_field += 1
+        
+        if st.session_state.current_field < len(disease_fields[st.session_state.disease_name]):
+            response = f"Got it! Now enter your {disease_fields[st.session_state.disease_name][st.session_state.current_field]}:"
+        else:
+            diagnosis, risk_level = get_prediction(st.session_state.disease_name, st.session_state.input_values)
+            response = f"{diagnosis}\n\nWould you like some health suggestions? (yes/no)"
+            st.session_state.step = 3
+    elif st.session_state.step == 3 and prompt.lower() in ["yes", "y"]:
+        response = chat_with_mistral(f"Provide health suggestions for {st.session_state.disease_name} with risk level {risk_level}.")
+        st.session_state.step = 0
     else:
         response = chat_with_mistral(prompt)
-        st.session_state.messages.append({"role": "assistant", "content": response})
+    
+    st.session_state.messages.append({"role": "assistant", "content": response})
+    with st.chat_message("assistant", avatar="🧑‍⚕️"):
+        st.markdown(response)
 
 st.rerun()
-
 
