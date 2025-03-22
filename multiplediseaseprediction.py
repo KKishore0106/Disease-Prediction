@@ -283,14 +283,12 @@ else:
         "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
     )
 
-   # SUGGESTING DISEASE STATE
+  # SUGGESTING DISEASE STATE
 elif st.session_state.conversation_state == "suggesting_disease":
     if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
         st.session_state.input_values = {}
         st.session_state.field_keys = list(disease_fields[st.session_state.disease_name].keys())
         st.session_state.current_field_index = 0
-        current_field = st.session_state.field_keys[0]
-        field_info = disease_fields[st.session_state.disease_name][current_field]
 
         response = f"Great! Let's check for {st.session_state.disease_name}. I'll need some medical information.\n\n"
         response += f"First, please enter your {current_field} ({field_info['description']}). "
