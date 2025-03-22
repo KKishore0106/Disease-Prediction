@@ -228,7 +228,7 @@ if prompt:
 
     if st.session_state.conversation_state == "general":
     # Check for disease testing requests
-    if any(x in prompt.lower() for x in ["check", "test", "assess", "diagnose"]) and any(disease.lower() in prompt.lower() for disease in disease_fields.keys()):
+     if any(x in prompt.lower() for x in ["check", "test", "assess", "diagnose"]) and any(disease.lower() in prompt.lower() for disease in disease_fields.keys()):
         for disease in disease_fields.keys():
             if disease.lower() in prompt.lower():
                 st.session_state.disease_name = disease
