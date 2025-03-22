@@ -282,8 +282,8 @@ else:
     response = chat_with_mistral(
         f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
         "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
-    )
-   # SUGGESTING DISEASE STATE
+  )
+# SUGGESTING DISEASE STATE
 elif st.session_state.conversation_state == "suggesting_disease":
     if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
         st.session_state.input_values = {}
@@ -291,12 +291,20 @@ elif st.session_state.conversation_state == "suggesting_disease":
         st.session_state.current_field_index = 0
 
         response = f"Great! Let's check for {st.session_state.disease_name}. I'll need some medical information.\n\n"
+        
+        current_field = st.session_state.field_keys[0]  # Ensure current_field is defined
+        field_info = disease_fields[st.session_state.disease_name][current_field]  # Get field info
+
         response += f"First, please enter your {current_field} ({field_info['description']}). "
         response += f"Typical range: {field_info['range']} {field_info['unit']}"
 
         st.session_state.conversation_state = "collecting_inputs"
+
     else:
-        response = "No problem. Is there another disease you'd like to check (Diabetes, Heart Disease, or Parkinson's), or do you have other health questions I can help with?"
+        response = (
+            "No problem. Is there another disease you'd like to check (Diabetes, Heart Disease, or Parkinson's), "
+            "or do you have other health questions I can help with?"
+        )
         st.session_state.conversation_state = "general"
 
     
