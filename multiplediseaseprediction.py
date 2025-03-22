@@ -284,7 +284,7 @@ else:
         "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
   )
 # SUGGESTING DISEASE STATE
-elif st.session_state.conversation_state == "suggesting_disease":
+    elif st.session_state.conversation_state == "suggesting_disease":
     if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
         st.session_state.input_values = {}
         st.session_state.field_keys = list(disease_fields[st.session_state.disease_name].keys())
