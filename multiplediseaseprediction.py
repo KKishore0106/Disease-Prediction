@@ -224,8 +224,9 @@ if prompt:
     greeting_patterns = ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]
     is_greeting = any(greeting == prompt.lower().strip() for greeting in greeting_patterns)
     
-    # GENERAL CONVERSATION STATE
-if st.session_state.conversation_state == "general":
+        # GENERAL CONVERSATION STATE
+
+    if st.session_state.conversation_state == "general":
     # Check for disease testing requests
     if any(x in prompt.lower() for x in ["check", "test", "assess", "diagnose"]) and any(disease.lower() in prompt.lower() for disease in disease_fields.keys()):
         for disease in disease_fields.keys():
@@ -282,8 +283,7 @@ else:
         f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
         "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
     )
-
-  # SUGGESTING DISEASE STATE
+   # SUGGESTING DISEASE STATE
 elif st.session_state.conversation_state == "suggesting_disease":
     if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
         st.session_state.input_values = {}
