@@ -141,7 +141,6 @@ def get_prediction(disease, input_values):
     except Exception as e:
         return f"⚠️ Unexpected error: {str(e)}"
 
-
 # **6️⃣ Symptom Analyzer Function**
 def analyze_symptoms(user_input):
     user_input = user_input.lower()
@@ -202,7 +201,6 @@ if "field_keys" not in st.session_state:
 if "modifying_field" not in st.session_state:
     st.session_state.modifying_field = None
 
-
 # **9️⃣ Display chat history**
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar="🧑‍⚕️" if message["role"] == "assistant" else "🙂"):
@@ -224,116 +222,114 @@ if prompt:
     greeting_patterns = ["hi", "hello", "hey", "greetings", "good morning", "good afternoon", "good evening"]
     is_greeting = any(greeting == prompt.lower().strip() for greeting in greeting_patterns)
     
-        # GENERAL CONVERSATION STATE
-
+    # GENERAL CONVERSATION STATE
     if st.session_state.conversation_state == "general":
-    # Check for disease testing requests
-     if any(x in prompt.lower() for x in ["check", "test", "assess", "diagnose"]) and any(disease.lower() in prompt.lower() for disease in disease_fields.keys()):
-        for disease in disease_fields.keys():
-            if disease.lower() in prompt.lower():
-                st.session_state.disease_name = disease
-                st.session_state.input_values = {}
-                st.session_state.field_keys = list(disease_fields[disease].keys())
-                st.session_state.current_field_index = 0
-                current_field = st.session_state.field_keys[0]
-                field_info = disease_fields[disease][current_field]
+        # Check for disease testing requests
+        if any(x in prompt.lower() for x in ["check", "test", "assess", "diagnose"]) and any(disease.lower() in prompt.lower() for disease in disease_fields.keys()):
+            for disease in disease_fields.keys():
+                if disease.lower() in prompt.lower():
+                    st.session_state.disease_name = disease
+                    st.session_state.input_values = {}
+                    st.session_state.field_keys = list(disease_fields[disease].keys())
+                    st.session_state.current_field_index = 0
+                    current_field = st.session_state.field_keys[0]
+                    field_info = disease_fields[disease][current_field]
 
-                response = f"I'll help you assess your condition for {disease}. I'll need to collect some medical information.\n\n"
-                response += f"First, please enter your {current_field} ({field_info['description']}). "
-                response += f"Typical range: {field_info['range']} {field_info['unit']}"
+                    response = f"I'll help you assess your condition for {disease}. I'll need to collect some medical information.\n\n"
+                    response += f"First, please enter your {current_field} ({field_info['description']}). "
+                    response += f"Typical range: {field_info['range']} {field_info['unit']}"
 
-                st.session_state.conversation_state = "collecting_inputs"
-                break
+                    st.session_state.conversation_state = "collecting_inputs"
+                    break
 
-       # Check for symptoms
-elif (
-    "symptom" in prompt.lower()
-    or any(
-        symptom in prompt.lower()
-        for disease_symptoms_list in disease_symptoms.values()
-        for symptom in disease_symptoms_list
-    )
-):
-    symptom_response, suggested_disease = analyze_symptoms(prompt)
-    
-    if symptom_response:
-        response = symptom_response
-        if suggested_disease:
-            st.session_state.disease_name = suggested_disease
-            st.session_state.conversation_state = "suggesting_disease"
-    else:
-        # If no clear symptoms found, use Mistral
-        response = chat_with_mistral(
-            f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
-            "Instead, focus on general health information and asking clarifying questions. "
-            "If they described symptoms, acknowledge them but suggest consulting a healthcare provider for proper diagnosis."
-        )
-
-# For greetings or general questions, use Mistral
-elif is_greeting:
-    response = (
-        "Hello! 👋 How are you feeling today? I'm your AI medical assistant. "
-        "I can help answer health questions, check whether you have diabetes, heart disease, or Parkinson's, "
-        "or discuss symptoms you might be experiencing."
-    )
-
-else:
-    # For general health questions
-    response = chat_with_mistral(
-        f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
-        "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
-  )
-# SUGGESTING DISEASE STATE
-    elif st.session_state.conversation_state == "suggesting_disease":
-    if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
-        st.session_state.input_values = {}
-        st.session_state.field_keys = list(disease_fields[st.session_state.disease_name].keys())
-        st.session_state.current_field_index = 0
-
-        response = f"Great! Let's check for {st.session_state.disease_name}. I'll need some medical information.\n\n"
-        
-        current_field = st.session_state.field_keys[0]  # Ensure current_field is defined
-        field_info = disease_fields[st.session_state.disease_name][current_field]  # Get field info
-
-        response += f"First, please enter your {current_field} ({field_info['description']}). "
-        response += f"Typical range: {field_info['range']} {field_info['unit']}"
-
-        st.session_state.conversation_state = "collecting_inputs"
-
-    else:
-        response = (
-            "No problem. Is there another disease you'd like to check (Diabetes, Heart Disease, or Parkinson's), "
-            "or do you have other health questions I can help with?"
-        )
-        st.session_state.conversation_state = "general"
-
-    
-   # COLLECTING INPUTS STATE
-elif st.session_state.conversation_state == "collecting_inputs":
-    disease = st.session_state.disease_name
-    fields = disease_fields[disease]
-
-    # Make sure field_keys is properly initialized
-    if not hasattr(st.session_state, 'field_keys') or st.session_state.field_keys is None:
-        st.session_state.field_keys = list(fields.keys())
-
-    # Make sure current_field_index is within bounds
-    if st.session_state.current_field_index >= len(st.session_state.field_keys):
-        st.session_state.current_field_index = len(st.session_state.field_keys) - 1
-
-    # Now safely get the current field
-    current_field = st.session_state.field_keys[st.session_state.current_field_index]
-
-    # Handle risk assessment requests specially 
-    if ("risk assessment" in prompt.lower() or any(x in prompt.lower() for x in ["get my results", "assess my risk"])) and len(st.session_state.input_values) > 0:
-        prediction_result = get_prediction(disease, st.session_state.input_values)
-
-        response = f"{prediction_result}\n\n"
-        response += "Would you like some personalized health suggestions? (yes/no)"
-        
-        st.session_state.conversation_state = "post_assessment"
-
+        # Check for symptoms
+        elif (
+            "symptom" in prompt.lower()
+            or any(
+                symptom in prompt.lower()
+                for disease_symptoms_list in disease_symptoms.values()
+                for symptom in disease_symptoms_list
+            )
+        ):
+            symptom_response, suggested_disease = analyze_symptoms(prompt)
             
+            if symptom_response:
+                response = symptom_response
+                if suggested_disease:
+                    st.session_state.disease_name = suggested_disease
+                    st.session_state.conversation_state = "suggesting_disease"
+            else:
+                # If no clear symptoms found, use Mistral
+                response = chat_with_mistral(
+                    f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
+                    "Instead, focus on general health information and asking clarifying questions. "
+                    "If they described symptoms, acknowledge them but suggest consulting a healthcare provider for proper diagnosis."
+                )
+
+        # For greetings or general questions, use Mistral
+        elif is_greeting:
+            response = (
+                "Hello! 👋 How are you feeling today? I'm your AI medical assistant. "
+                "I can help answer health questions, check whether you have diabetes, heart disease, or Parkinson's, "
+                "or discuss symptoms you might be experiencing."
+            )
+
+        else:
+            # For general health questions
+            response = chat_with_mistral(
+                f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
+                "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
+            )
+
+    # SUGGESTING DISEASE STATE
+    elif st.session_state.conversation_state == "suggesting_disease":
+        if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
+            st.session_state.input_values = {}
+            st.session_state.field_keys = list(disease_fields[st.session_state.disease_name].keys())
+            st.session_state.current_field_index = 0
+
+            response = f"Great! Let's check for {st.session_state.disease_name}. I'll need some medical information.\n\n"
+            
+            current_field = st.session_state.field_keys[0]  # Ensure current_field is defined
+            field_info = disease_fields[st.session_state.disease_name][current_field]  # Get field info
+
+            response += f"First, please enter your {current_field} ({field_info['description']}). "
+            response += f"Typical range: {field_info['range']} {field_info['unit']}"
+
+            st.session_state.conversation_state = "collecting_inputs"
+
+        else:
+            response = (
+                "No problem. Is there another disease you'd like to check (Diabetes, Heart Disease, or Parkinson's), "
+                "or do you have other health questions I can help with?"
+            )
+            st.session_state.conversation_state = "general"
+
+    # COLLECTING INPUTS STATE
+    elif st.session_state.conversation_state == "collecting_inputs":
+        disease = st.session_state.disease_name
+        fields = disease_fields[disease]
+
+        # Make sure field_keys is properly initialized
+        if not hasattr(st.session_state, 'field_keys') or st.session_state.field_keys is None:
+            st.session_state.field_keys = list(fields.keys())
+
+        # Make sure current_field_index is within bounds
+        if st.session_state.current_field_index >= len(st.session_state.field_keys):
+            st.session_state.current_field_index = len(st.session_state.field_keys) - 1
+
+        # Now safely get the current field
+        current_field = st.session_state.field_keys[st.session_state.current_field_index]
+
+        # Handle risk assessment requests specially 
+        if ("risk assessment" in prompt.lower() or any(x in prompt.lower() for x in ["get my results", "assess my risk"])) and len(st.session_state.input_values) > 0:
+            prediction_result = get_prediction(disease, st.session_state.input_values)
+
+            response = f"{prediction_result}\n\n"
+            response += "Would you like some personalized health suggestions? (yes/no)"
+            
+            st.session_state.conversation_state = "post_assessment"
+
         # Check if user wants to modify a previous value
         elif any(pattern in prompt.lower() for pattern in ["change", "modify", "edit", "update", "fix", "correct", "redo"]) and st.session_state.current_field_index > 0:
             # Try to identify which field they want to change
@@ -449,38 +445,38 @@ elif st.session_state.conversation_state == "collecting_inputs":
                     current_field = st.session_state.field_keys[st.session_state.current_field_index]
                     response = f"⚠️ Please enter a valid number for {current_field}."
     
-  # Special handling for final prediction request
-if (
-    st.session_state.conversation_state == "collecting_inputs"
-    and len(st.session_state.input_values) == len(st.session_state.field_keys)
-    and any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"])
-):
-    # Generate prediction
-    prediction_result = get_prediction(st.session_state.disease_name, st.session_state.input_values)
+    # Special handling for final prediction request
+    if (
+        st.session_state.conversation_state == "collecting_inputs"
+        and len(st.session_state.input_values) == len(st.session_state.field_keys)
+        and any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"])
+    ):
+        # Generate prediction
+        prediction_result = get_prediction(st.session_state.disease_name, st.session_state.input_values)
 
-    # Format response with prediction and next steps
-    response = f"{prediction_result}\n\nWould you like some personalized health suggestions? (yes/no)"
-    
-    st.session_state.conversation_state = "post_assessment"
+        # Format response with prediction and next steps
+        response = f"{prediction_result}\n\nWould you like some personalized health suggestions? (yes/no)"
+        
+        st.session_state.conversation_state = "post_assessment"
 
-   # POST ASSESSMENT STATE
-elif st.session_state.conversation_state == "post_assessment":
-    if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
-        # Generate personalized health suggestions
-        disease = st.session_state.disease_name
+    # POST ASSESSMENT STATE
+    elif st.session_state.conversation_state == "post_assessment":
+        if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
+            # Generate personalized health suggestions
+            disease = st.session_state.disease_name
 
-        suggestions_prompt = f"""
-        As a medical AI assistant, provide personalized health suggestions for {disease}.
-        Include lifestyle modifications, diet recommendations, and when to seek medical attention. 
-        Format the response in clear sections with bullet points. Keep it concise and practical.
-        User values: {st.session_state.input_values}
-        """
+            suggestions_prompt = f"""
+            As a medical AI assistant, provide personalized health suggestions for {disease}.
+            Include lifestyle modifications, diet recommendations, and when to seek medical attention. 
+            Format the response in clear sections with bullet points. Keep it concise and practical.
+            User values: {st.session_state.input_values}
+            """
 
-        response = chat_with_mistral(suggestions_prompt)
-        response += "\n\nIs there anything specific you'd like to know about managing your health?"
-    else:
-        response = "Alright. Is there anything else I can help you with today?"
-        st.session_state.conversation_state = "general"
+            response = chat_with_mistral(suggestions_prompt)
+            response += "\n\nIs there anything specific you'd like to know about managing your health?"
+        else:
+            response = "Alright. Is there anything else I can help you with today?"
+            st.session_state.conversation_state = "general"
 
 # Add assistant response to chat
 st.session_state.messages.append({"role": "assistant", "content": response})
@@ -495,7 +491,7 @@ with st.sidebar:
     - Answer general health questions
     - Assess risk for diabetes, heart disease, and Parkinson's
     - Analyze symptoms you might
- - Provide personalized health suggestions
+    - Provide personalized health suggestions
     
     **Important Disclaimer:** This tool provides general information only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions regarding a medical condition.
     """)
