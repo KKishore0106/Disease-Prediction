@@ -245,7 +245,15 @@ if st.session_state.conversation_state == "general":
                 break
 
         # Check for symptoms
-        elif "symptom" in prompt.lower() or any(symptom in prompt.lower() for disease_symptoms_list in disease_symptoms.values() for symptom in disease_symptoms_list):
+            elif (
+    "symptom" in prompt.lower() or 
+    any(
+        symptom in prompt.lower() 
+        for disease_symptoms_list in disease_symptoms.values() 
+        for symptom in disease_symptoms_list
+    )
+):
+
             symptom_response, suggested_disease = analyze_symptoms(prompt)
             if symptom_response:
                 response = symptom_response
