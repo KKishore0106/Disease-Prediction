@@ -244,33 +244,45 @@ if st.session_state.conversation_state == "general":
                 st.session_state.conversation_state = "collecting_inputs"
                 break
 
-        # Check for symptoms
-            elif (
-    "symptom" in prompt.lower() or 
-    any(
-        symptom in prompt.lower() 
-        for disease_symptoms_list in disease_symptoms.values() 
+       # Check for symptoms
+elif (
+    "symptom" in prompt.lower()
+    or any(
+        symptom in prompt.lower()
+        for disease_symptoms_list in disease_symptoms.values()
         for symptom in disease_symptoms_list
     )
 ):
-
-            symptom_response, suggested_disease = analyze_symptoms(prompt)
-            if symptom_response:
-                response = symptom_response
-                if suggested_disease:
-                    st.session_state.disease_name = suggested_disease
-                    st.session_state.conversation_state = "suggesting_disease"
-            else:
-                # If no clear symptoms found, use Mistral
-                response = chat_with_mistral(f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. Instead, focus on general health information and asking clarifying questions. If they described symptoms, acknowledge them but suggest consulting a healthcare provider for proper diagnosis.")
-        
-        # For greetings or general questions, use Mistral
-        elif is_greeting:
-            response = "Hello! 👋 How are you feeling today? I'm your AI medical assistant. I can help answer health questions, check whether u have  diabetes, heart disease, or Parkinson's, or discuss symptoms you might be experiencing."
-        else:
-            # For general health questions
-            response = chat_with_mistral(f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone.")
+    symptom_response, suggested_disease = analyze_symptoms(prompt)
     
+    if symptom_response:
+        response = symptom_response
+        if suggested_disease:
+            st.session_state.disease_name = suggested_disease
+            st.session_state.conversation_state = "suggesting_disease"
+    else:
+        # If no clear symptoms found, use Mistral
+        response = chat_with_mistral(
+            f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
+            "Instead, focus on general health information and asking clarifying questions. "
+            "If they described symptoms, acknowledge them but suggest consulting a healthcare provider for proper diagnosis."
+        )
+
+# For greetings or general questions, use Mistral
+elif is_greeting:
+    response = (
+        "Hello! 👋 How are you feeling today? I'm your AI medical assistant. "
+        "I can help answer health questions, check whether you have diabetes, heart disease, or Parkinson's, "
+        "or discuss symptoms you might be experiencing."
+    )
+
+else:
+    # For general health questions
+    response = chat_with_mistral(
+        f"The user said: '{prompt}'. Respond as a medical AI assistant but avoid making specific diagnoses. "
+        "Instead, focus on general health information and suggesting next steps. Always maintain a friendly and helpful tone."
+    )
+
    # SUGGESTING DISEASE STATE
 elif st.session_state.conversation_state == "suggesting_disease":
     if any(x in prompt.lower() for x in ["yes", "yeah", "sure", "okay", "ok", "yep", "y"]):
