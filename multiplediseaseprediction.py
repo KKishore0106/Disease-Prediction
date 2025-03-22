@@ -408,7 +408,7 @@ elif st.session_state.conversation_state == "collecting_inputs":
                                 response = "Thanks for providing all the information. Here's a summary of what you entered:\n\n"
                                 for field, value in st.session_state.input_values.items():
                                     response += f"- {field}: {value}\n"
-                                response += "\nWould you like to predict now? (yes/no)
+                                response += "\nWould you like to predict now? (yes/no)"
                         else:
                             response = f"Let's try again. Please enter a numeric value for {current_field}."
                     except:
